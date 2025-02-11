@@ -1,4 +1,4 @@
-package com.yoiki.pdf_service;
+package com.yoiki.pdfservice;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
