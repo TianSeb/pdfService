@@ -1,38 +1,32 @@
 package com.yoiki.pdfservice.generator;
 
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.InputStreamResource;
-import org.springframework.http.HttpHeaders;
+import com.yoiki.pdfservice.generator.request.PDFRequest;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.io.ByteArrayInputStream;
+import org.springframework.web.bind.annotation.*;
+import lombok.RequiredArgsConstructor;
 
 @RestController
+@RequestMapping("/pdf")
 @RequiredArgsConstructor
 public class PDFGenerationController {
 
     private final PDFService pdfService;
 
-    @GetMapping("/generate-pdf")
-    public ResponseEntity<InputStreamResource> generatePDF() {
+    @PostMapping("/generar")
+    public ResponseEntity<byte[]> generarPDF(@RequestBody PDFRequest request) {
         try {
-            ByteArrayInputStream pdfStream = pdfService.generatePDF();
-
-            // Set headers for the PDF file
-            HttpHeaders headers = new HttpHeaders();
-            headers.add("Content-Disposition", "inline; filename=example.pdf");
+            var tipoDocumento = TipoDocumento.valueOf(request.tipoDocumento().toUpperCase());
+            byte[] pdfBytes = pdfService.generarPDF(tipoDocumento, request.datos());
 
             return ResponseEntity.ok()
-                    .headers(headers)
                     .contentType(MediaType.APPLICATION_PDF)
-                    .body(new InputStreamResource(pdfStream));
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.internalServerError().build();
+                    .header("Content-Disposition", "inline; filename="
+                            + tipoDocumento.name().toLowerCase() + ".pdf")
+                    .body(pdfBytes);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(("Tipo de documento no válido: "
+                    + request.tipoDocumento()).getBytes());
         }
     }
 }
